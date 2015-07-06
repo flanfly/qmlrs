@@ -19,7 +19,7 @@ mod macros;
 mod variant;
 
 pub trait Object {
-    fn qt_metaobject(&self) -> MetaObject;
+    fn qt_metaobject(&self) -> &'static MetaObject;
     fn qt_metacall(&mut self, slot: i32, args: *const *const OpaqueQVariant);
 }
 
@@ -151,8 +151,6 @@ impl Engine {
         }
     }
 }
-
-/* MetaObjects currently leak. Once a cache system is implemented, this should be fine. */
 
 #[allow(missing_copy_implementations)]
 pub struct MetaObject {

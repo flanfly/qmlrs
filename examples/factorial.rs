@@ -11,7 +11,7 @@ impl Factorial {
     }
 }
 
-Q_OBJECT! { Factorial:
+Q_OBJECT! { Factorial [ FACTORIAL_METAOBJ ] :
     slot fn calculate(i64);
 //    signal fn test();
 }

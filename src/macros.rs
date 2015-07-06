@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! Q_OBJECT(
     (
-        $t:ty :
+        $t:ty [ $c:ident ] :
             $(
                 slot fn $name:ident ( $($at:ty),* );
             )*
@@ -32,25 +32,34 @@ macro_rules! Q_OBJECT(
                 }
             )+
         }
+
 */
+        static mut $c: Option<qmlrs::MetaObject> = None;
+
         impl qmlrs::Object for $t {
             #[allow(unused_mut, unused_variables)]
-            fn qt_metaobject(&self) -> qmlrs::MetaObject {
-                let x = qmlrs::MetaObject::new();
-/*
-                $(
-                    let x = x.signal(stringify!($sname), 0);
-                )+
-*/
-                $(
-                    let mut argc = 0;
-                    $(
-                        let _: $at;
-                        argc += 1;
-                    )*
-                    let x = x.slot(stringify!($name), argc);
-                )+
-                x
+            fn qt_metaobject(&self) -> &'static qmlrs::MetaObject {
+                unsafe {
+                    if $c.is_none() {
+                        let x = qmlrs::MetaObject::new();
+        /*
+                        $(
+                            let x = x.signal(stringify!($sname), 0);
+                        )+
+        */
+                        $(
+                            let mut argc = 0;
+                            $(
+                                let _: $at;
+                                argc += 1;
+                            )*
+                            let x = x.slot(stringify!($name), argc);
+                        )+
+
+                        $c = Some(x)
+                    }
+                    return $c.as_ref().unwrap();
+                }
             }
 
             #[allow(unused_assignments, unused_mut, unused_variables)]
