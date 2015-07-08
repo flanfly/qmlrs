@@ -1,17 +1,18 @@
 #[macro_export]
 macro_rules! Q_OBJECT(
     (
-        $t:ty [ $c:ident ] :
+        $t:ty [ $c:ident ]
+        slots:
             $(
-                slot fn $name:ident ( $($at:ty),* );
+                fn $name:ident ( $($at:ty),* );
             )*
-/*
+        signals:
             $(
-                signal fn $sname:ident ( );
+                fn $sname:ident ( );
             )*
-*/
+
     ) => (
-/*
+
         impl $t {
             #[allow(dead_code, unused_mut, unused_variables, unused_assignments)]
             fn __qmlrs_signal_id(&self, name: &str) -> u32 {
@@ -21,19 +22,20 @@ macro_rules! Q_OBJECT(
                         return id;
                     }
                     id += 1;
-                )+
+                )*
                 panic!("__qmlrs_signal_id called with invalid signal name!");
             }
 
             $(
                 #[allow(dead_code)]
                 fn $sname (&self) {
-                    qmlrs::__qobject_emit(self, self.__qmlrs_signal_id(stringify!($sname)));
+                    println!("call {}",stringify!($sname));
+                    qmlrs::__qobject_emit(self.qt_metaobject().ins, self.__qmlrs_signal_id(stringify!($sname)));
                 }
-            )+
+            )*
         }
 
-*/
+
         static mut $c: Option<qmlrs::MetaObject> = None;
 
         impl qmlrs::Object for $t {
@@ -42,11 +44,6 @@ macro_rules! Q_OBJECT(
                 unsafe {
                     if $c.is_none() {
                         let x = qmlrs::MetaObject::new();
-        /*
-                        $(
-                            let x = x.signal(stringify!($sname), 0);
-                        )+
-        */
                         $(
                             let mut argc = 0;
                             $(
@@ -54,7 +51,11 @@ macro_rules! Q_OBJECT(
                                 argc += 1;
                             )*
                             let x = x.slot(stringify!($name), argc);
-                        )+
+                        )*
+
+                        $(
+                            let x = x.signal(stringify!($sname), 0);
+                        )*
 
                         $c = Some(x)
                     }
@@ -66,12 +67,7 @@ macro_rules! Q_OBJECT(
             fn qt_metacall(&mut self, slot: i32, args: *const *const qmlrs::OpaqueQVariant) {
                 use qmlrs::ToQVariant;
                 let mut i = 0;
-/*
-                $(
-                    let _ = stringify!($sname);
-                    i += 1;
-                )+
-*/
+
                 $(
                     if i == slot {
                         let mut argi = 1u8; /* 0 is for return value */
@@ -93,8 +89,15 @@ macro_rules! Q_OBJECT(
                         return
                     }
                     i += 1;
-                )+
+                )*
+
+                $(
+                    let _ = stringify!($sname);
+                    i += 1;
+                )*
+
             }
+
         }
     )
 );

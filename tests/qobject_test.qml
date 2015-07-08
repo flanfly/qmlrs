@@ -4,6 +4,9 @@ Item {
   Timer {
     interval: 1000
     running: true
-    onTriggered: Qt.quit();
+	 onTriggered: {
+		 console.log(person_one);
+		 Qt.quit();
+	 }
   }
 }

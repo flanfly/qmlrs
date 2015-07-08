@@ -18,9 +18,11 @@ mod ffi;
 mod macros;
 mod variant;
 
+/*
 pub trait Object {
     fn qt_metaobject(&self) -> &'static MetaObject;
     fn qt_metacall(&mut self, slot: i32, args: *const *const OpaqueQVariant);
+    //fn qt_emit(&self, signal: &str);
 }
 
 pub fn __qobject_emit<T: Object>(obj: &T, id: u32) {
@@ -37,7 +39,7 @@ fn get_qobject<T: Object>(ptr: &T) -> *mut QObject {
         hdr.qobj
     }
 }
-
+*/
 struct EngineInternal {
     p: *mut QrsEngine,
 }
@@ -56,19 +58,21 @@ pub struct Engine {
     i: Arc<EngineInternal>,
 }
 
+/*
 #[repr(packed)]
 struct PropHdr<T: Object> {
     qobj: *mut QObject,
     obj: T
 }
+*/
 
-extern "C" fn slot_handler<T: Object>(data: *mut c_void, slot: c_int,
+extern "C" fn slot_handler(data: *mut c_void, slot: c_int,
                                       args: *const *const ffi::QVariant)
 {
-    unsafe {
+  /*  unsafe {
         let hdr: &mut PropHdr<T> = std::mem::transmute(data);
         hdr.obj.qt_metacall(slot as i32, args);
-    }
+    }*/
 }
 
 impl Engine {
@@ -135,19 +139,10 @@ impl Engine {
     }
     */
 
-    pub fn set_property<T: Object>(&mut self, name: &str, obj: T) {
+    pub fn set_property(&mut self, name: &str, obj: &Object) {
         unsafe {
-            let mo = obj.qt_metaobject().p;
-            let mut boxed = Box::new(PropHdr { qobj: std::ptr::null_mut(), obj: obj });
-            let qobj = ffi::qmlrs_metaobject_instantiate(
-                mo, slot_handler::<T>, &mut *boxed as *mut PropHdr<T> as *mut c_void);
-
-            boxed.qobj = qobj;
-
             ffi::qmlrs_engine_set_property(self.i.p, name.as_ptr() as *const c_char,
-                                           name.len() as c_uint, qobj);
-
-            std::mem::forget(boxed);
+                                           name.len() as c_uint, obj.p);
         }
     }
 }
@@ -180,6 +175,21 @@ impl MetaObject {
         }
         self
     }
+
+    pub fn instantiate(&self) -> Object {
+        unsafe {
+            let mo = self.p;
+            let qobj = ffi::qmlrs_metaobject_instantiate(mo);
+
+            Object{ p: qobj }
+        }
+    }
+
+}
+
+#[derive(Clone)]
+pub struct Object {
+    p: *mut ffi::QObject
 }
 
 /*

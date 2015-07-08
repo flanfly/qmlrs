@@ -4,20 +4,23 @@ extern crate qmlrs;
 use std::fs::File;
 use std::io::prelude::*;
 
-struct Factorial;
+enum Factorial{}
+
 impl Factorial {
     fn calculate(&self, x: i64) -> i64 {
         (1..x+1).fold(1, |t,c| t * c)
     }
 }
-
-Q_OBJECT! { Factorial [ FACTORIAL_METAOBJ ] :
-    slot fn calculate(i64);
-//    signal fn test();
+/*
+Q_OBJECT! { Factorial [ FACTORIAL_METAOBJ ]
+    slots:
+        fn calculate(i64);
+    signals:
+        fn test();
 }
-
+*/
 fn main() {
-    let mut engine = qmlrs::Engine::new();
+/*    let mut engine = qmlrs::Engine::new();
 
     engine.set_property("factorial", Factorial);
     engine.load_local_file("examples/factorial_ui.qml");
@@ -33,5 +36,5 @@ fn main() {
     qml_string = qml_string.replace("Factorial", "Factorial (from string)");
     engine2.load_data(&qml_string);
 
-    engine2.exec();
+    engine2.exec();*/
 }
