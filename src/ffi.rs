@@ -1,6 +1,6 @@
 #![allow(missing_copy_implementations)]
 
-use libc::{c_char, c_int, c_uint, c_void};
+use libc::{c_char, c_int, c_uint};
 
 pub enum QrsEngine {}
 pub enum QrsMetaObject {}
@@ -17,7 +17,7 @@ pub enum QrsVariantType {
     String
 }
 
-pub type SlotFunction = extern "C" fn(data: *mut c_void, id: c_int, args: *const *const QVariant);
+pub type SlotFunction = extern "C" fn(this: *mut QObject, id: c_int, args: *const QVariantList, ret: *mut QVariant);
 
 extern "C" {
     pub fn qmlrs_create_engine() -> *mut QrsEngine;
@@ -50,17 +50,19 @@ extern "C" {
 
     pub fn qmlrs_app_exec();
 
-    pub fn qmlrs_metaobject_create() -> *mut QrsMetaObject;
+    pub fn qmlrs_metaobject_create(name: *const c_char, name_len: c_uint, slot_func: SlotFunction) -> *mut QrsMetaObject;
     pub fn qmlrs_metaobject_destroy(mo: *mut QrsMetaObject);
-    pub fn qmlrs_metaobject_add_slot(mo: *mut QrsMetaObject, name: *const c_char, name_len: c_uint,
-                                     argc: c_uint);
-    pub fn qmlrs_metaobject_add_signal(mo: *mut QrsMetaObject, name: *const c_char,
-                                       name_len: c_uint, argc: c_uint);
-    pub fn qmlrs_metaobject_instantiate(mo: *mut QrsMetaObject/*, fun: SlotFunction,
-                                        data: *mut c_void*/) -> *mut QObject;
+    pub fn qmlrs_metaobject_add_slot(mo: *mut QrsMetaObject, sig: *const c_char, sig_len: c_uint) -> c_int;
+    pub fn qmlrs_metaobject_add_method(mo: *mut QrsMetaObject, sig: *const c_char, sig_len: c_uint) -> c_int;
+    pub fn qmlrs_metaobject_add_signal(mo: *mut QrsMetaObject, sig: *const c_char, sig_len: c_uint) -> c_int;
+    pub fn qmlrs_metaobject_add_property(obj: *mut QrsMetaObject, name: *const c_char, name_len: c_uint, typ: *const c_char,
+                                         typ_len: c_uint, typ: *const c_char, typ_len: c_uint);
+    pub fn qmlrs_metaobject_instantiate(mo: *mut QrsMetaObject) -> *mut QObject;
 
-    pub fn qmlrs_object_set_property(obj: *mut QObject, name: *const c_char, len: c_uint,
-                                     val: *mut QVariant);
-    pub fn qmlrs_object_emit_signal(obj: *mut QObject, id: c_uint);
-    pub fn qmlrs_object_destroy(obj: *mut QObject);
+    pub fn qmlrs_object_call(obj: *mut QObject, id: c_int, argv: *const QVariantList, ret: *mut QVariant);
+    pub fn qmlrs_object_emit(obj: *mut QObject, id: c_int, argv: *const QVariantList);
+    pub fn qmlrs_object_set_property(obj: *mut QObject, name: *const c_char, name_len: c_uint, value: *const QVariant);
+    pub fn qmlrs_object_get_property(obj: *mut QObject, name: *const c_char, name_len: c_uint, value: *const QVariant);
+
+    pub fn qmlrs_object_delete_later(obj: *mut QObject);
 }
