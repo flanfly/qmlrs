@@ -1,119 +1,41 @@
-/*
-Q_OBJECT! {
-    Factorial:
-
-    properties {
-        u64 name READ get_name WRITE set_name,
-        property age: String
-    }
-
-    signals {
-        test
-    }
-
-    slots {
-        calculate(i64)
-    }
-}
-*/
-#[macro_use]
 extern crate qmlrs;
 
 extern crate libc;
 
-use qmlrs::variant::ToQVariant;
-use std::sync::{Once,ONCE_INIT};
+use qmlrs::*;
 
-struct Person {
-    name: String,
-    age: usize,
-    __qmlrs_object: qmlrs::Object,
-}
+#[test]
+pub fn qobject_test() {
+    let mut engine = qmlrs::Engine::new();
 
-impl Person {
-    pub fn new(n: &str, a: usize) -> Person {
-        static mut METAOBJ: Option<qmlrs::MetaObject> = None;
-        static ALLOC_METAOBJ: Once = ONCE_INIT;
-        ALLOC_METAOBJ.call_once(|| {
-            unsafe {
-                let metaobj = qmlrs::MetaObject::new();
+    extern "C" fn test_slot(_: *mut ffi::QObject, id: libc::c_int, _: *const ffi::QVariantList, _: *mut ffi::QVariant) {
+        println!("slot: {} called",id);
 
-                metaobj.signal("nameChanged",0);
-                metaobj.signal("ageChanged",0);
-
-                METAOBJ = Some(metaobj);
-            }
-        });
-
-        let obj = unsafe {
-            let obj = METAOBJ.as_ref().unwrap().instantiate();
-            let var = qmlrs::ffi::qmlrs_variant_create();
-
-            n.to_string().to_qvariant(var);
-            qmlrs::ffi::qmlrs_object_set_property(obj.p,"name".as_ptr() as *const libc::c_char,4 as libc::c_uint,var);
-
-            qmlrs::ffi::qmlrs_variant_destroy(var);
-
-            obj
-        };
-
-        Person{
-            name: n.to_string(),
-            age: a,
-            __qmlrs_object: obj,
+        if 1 == id {
+            println!("test_slot called");
+        } else if 2 == id {
+            println!("func(int) called");
+        } else {
+            panic!("unknown id {}",id);
         }
     }
 
-    pub fn object(&self) -> qmlrs::Object {
-        self.__qmlrs_object.clone()
-    }
-}
 
-#[test]
-pub fn main() {
-    let mut engine = qmlrs::Engine::new();
-    let p1 = Person::new("Kai",29);
+    let mut metaobj = MetaObject::new("Person",test_slot);
 
+    assert_eq!(metaobj.add_signal("nameChanged()"),0);
+    metaobj.add_property("name","QString",Some("nameChanged()"));
+    assert_eq!(metaobj.add_slot("test_slot()"),1);
+    assert_eq!(metaobj.add_method("func(int)"),2);
+
+        let mut obj = metaobj.instantiate();
+
+    obj.set_property("name",Variant::String("Kai".to_string()));
+    obj.emit(0,&[]);
+    obj.call(1,&[]);
+    obj.call(2,&[Variant::I64(42)]);
+
+    engine.set_property("person_one", &obj);
     engine.load_local_file("tests/qobject_test.qml");
-    engine.set_property("person_one", &p1.object());
     engine.exec();
 }
-
-/*
- *
- * struct Factorial {
- *     name: u64,
- *     age: String,
- *     __qmlrs_object: Object,
- * }
- *
- * impl Factorial {
- *     pub fn new(name: u64, age: String) -> Factorial {
- *         ONCE...
- *         Factorial {
- *             name: name,
- *             age: age,
- *             __qmlrs_object: FACTORIAL_METAOBJ.unwrap().instance(),
- *         }
- *     }
- *
- *     pub fn test(&self) {
- *         self.__qmlrs_object.emit(1);
- *     }
- *
- *     pub fn name_changed(&self) {
- *         self.__qmlrs_object.emit(0);
- *     }
- *
- *     pub fn set_name(&mut self,val: String) {
- *         self.name = val;
- *         self.name_changed();
- *     }
- *
- *     pub fn get_name(&self) -> String {
- *         self.name.clone()
- *     }
- *
- * }
- */
-
