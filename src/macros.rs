@@ -32,6 +32,8 @@ macro_rules! Q_OBJECT(
                 }
             )+
         }
+
+
 */
         impl qmlrs::Object for $t {
             #[allow(unused_mut, unused_variables)]
