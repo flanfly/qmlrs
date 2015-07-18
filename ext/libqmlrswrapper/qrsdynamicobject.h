@@ -1,71 +1,54 @@
 #ifndef QRSDYNAMICOBJECT_H
 #define QRSDYNAMICOBJECT_H
 
+#include <memory>
 #include <QtCore>
+#include "private/qmetaobjectbuilder_p.h"
 
 #if Q_MOC_OUTPUT_REVISION != 67
 #error "Unsupport Qt version. Qt with Q_MOC_OUTPUT_REVISION == 67 is required."
 #endif
 
-extern "C" typedef void *(QrsSlotFunction)(void *data, int slot, QVariant **args);
+extern "C" typedef void *(QrsSlotFunction)(void *data, int slot, QVariantList const* args,QVariant *retval);
 
 class QrsDynamicMetaObject
 {
 public:
-    QrsDynamicMetaObject();
+    QrsDynamicMetaObject(const QString& n, QrsSlotFunction fun);
     virtual ~QrsDynamicMetaObject();
 
-    struct Method {
-        QString name;
-        uint args;
-        uint flags;
-    };
+		int addSlot(QString const& sig);
+		int addMethod(QString const& sig);
+		int addSignal(QString const& sig);
+		void addProperty(QString const& name, QString const& type, QString const& sig);
 
-    void addSlot(QString name, uint args) {
-        if (_mo)
-            qFatal("Cannot add slot after object created");
+    QObject *instantiate(void);
+		QMetaObject *metaObject(void);
+		QMetaObject const *metaObject(void) const;
 
-        Method m = { name, args, 0x0a };
-
-        _methods.append(m);
-    }
-
-    void addSignal(QString name, uint args) {
-        if (_mo)
-            qFatal("Cannot add signal after object created");
-
-        Method m = { name, args, 0x06 };
-
-        _methods.append(m);
-    }
-
-    QObject *create(QrsSlotFunction fun, void *data);
+		QVariant invoke(QObject* self, int id, QVariantList const& argv) const;
 
 private:
-    QList<Method> _methods;
-    QMetaObject *_mo;
-
-    void finalize();
+		QMetaObjectBuilder _builder;
+		std::unique_ptr<QMetaObject> _metaObject;
+		QrsSlotFunction *_slotFunction;
 };
 
 class QrsDynamicObject : public QObject
 {
 public:
-    QrsDynamicObject(QrsSlotFunction *fun, void *data, QMetaObject *mo, int n_slots);
+    QrsDynamicObject(QrsDynamicMetaObject const& mo);
+
     virtual const QMetaObject* metaObject() const;
     virtual void* qt_metacast(const char* );
     virtual int qt_metacall(QMetaObject::Call , int , void** );
 
-    void emitSignal(int id);
+    QVariant callMethod(int id,QVariantList const& args);
+    void emitSignal(int id,QVariantList const& args);
 
 private:
-    QrsSlotFunction *_fun;
-    void *_data;
-    int _n_slots;
-
-    QMetaObject *_mo;
-
-    void invokeMetacall(int id, void** args);
+		QrsDynamicMetaObject const& _metaObject;
+		std::list<QVariant> _properties;
 };
 
 #endif // QRSDYNAMICOBJECT_H

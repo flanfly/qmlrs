@@ -51,20 +51,6 @@ rust_fun void qmlrs_engine_load_from_data(QrsApplicationEngine *engine, const ch
     engine->loadData(QByteArray::fromRawData(data, len), QUrl());
 }
 
-rust_fun void qmlrs_engine_invoke(QrsApplicationEngine *engine, const char *method,
-                                  QVariant *result, const QVariantList *args)
-{
-    if (args->size() > 10) {
-        qFatal("Cannot invoke method with more than 10 arguments");
-    }
-
-    QVariant returned;
-    QMetaObject::invokeMethod(engine, "invokeQmlSlot", Q_RETURN_ARG(QVariant, returned),
-                              Q_ARG(QString, QString::fromUtf8(method)),
-                              Q_ARG(QVariantList, *args));
-    *result = returned;
-}
-
 rust_fun void qmlrs_engine_set_property(QrsApplicationEngine *engine, const char *name, uint len,
                                         QObject *object) {
     engine->rootContext()->setContextProperty(QString::fromUtf8(name, len), object);
@@ -159,27 +145,4 @@ rust_fun void qmlrs_variant_get_string_data(const QVariant *v, char *data) {
 
 QrsApplicationEngine::QrsApplicationEngine()
 {
-}
-
-QVariant QrsApplicationEngine::invokeQmlSlot(QString name, QVariantList args) {
-    QObject *root = rootObjects().first();
-
-    QVariant returned;
-
-    QGenericArgument a0, a1, a2, a3, a4, a5, a6, a7, a8, a9;
-    if (args.size() > 9) a9 = Q_ARG(QVariant, args[9]);
-    if (args.size() > 8) a8 = Q_ARG(QVariant, args[8]);
-    if (args.size() > 7) a7 = Q_ARG(QVariant, args[7]);
-    if (args.size() > 6) a6 = Q_ARG(QVariant, args[6]);
-    if (args.size() > 5) a5 = Q_ARG(QVariant, args[5]);
-    if (args.size() > 4) a4 = Q_ARG(QVariant, args[4]);
-    if (args.size() > 3) a3 = Q_ARG(QVariant, args[3]);
-    if (args.size() > 2) a2 = Q_ARG(QVariant, args[2]);
-    if (args.size() > 1) a1 = Q_ARG(QVariant, args[1]);
-    if (args.size() > 0) a0 = Q_ARG(QVariant, args[0]);
-
-    QMetaObject::invokeMethod(root, name.toUtf8(), Q_RETURN_ARG(QVariant, returned),
-                              a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
-
-    return returned;
 }

@@ -2,147 +2,87 @@
 
 #include <iostream>
 
-QrsDynamicMetaObject::QrsDynamicMetaObject()
-: _mo(NULL)
+QrsDynamicMetaObject::QrsDynamicMetaObject(QString const& n, QrsSlotFunction fun)
+: _metaObject(), _builder()
 {
+	_slotFunction = fun;
+	_builder.setClassName(n.toUtf8());
+	_builder.setSuperClass(&QObject::staticMetaObject);
 }
 
-QrsDynamicMetaObject::~QrsDynamicMetaObject()
-{
-    if (_mo) {
-        delete _mo->d.stringdata;
-        delete _mo->d.data;
-        delete _mo;
-    }
-}
+QrsDynamicMetaObject::~QrsDynamicMetaObject() {}
 
 void qrsStaticDynamicMetacall(QObject *qobj, QMetaObject::Call c, int id, void **a) {
     qobj->qt_metacall(c, id, a);
 }
 
-void QrsDynamicMetaObject::finalize()
-{
-    _mo = new QMetaObject;
-    _mo->d.superdata = &QObject::staticMetaObject;
-    _mo->d.extradata = NULL;
-    _mo->d.relatedMetaObjects = NULL;
-    _mo->d.static_metacall = qrsStaticDynamicMetacall;
+int QrsDynamicMetaObject::addSlot(QString const& sig) {
+		if (_metaObject)
+				qFatal("Cannot add slot after object created");
 
-    /* Build string data */
-
-    struct ArrayData {
-        int ref;
-        int size;
-        uint _1 : 31;
-        uint _2 : 1;
-        qptrdiff offset;
-    };
-
-    QVector<ArrayData> stringhdr;
-    QByteArray stringdata;
-
-#define ADD_STRING_HDR(len) { stringhdr.append(ArrayData { -1, len, 0, 0, \
-        qptrdiff(stringdata.size() - stringhdr.size() * sizeof(ArrayData)) }); }
-
-    QString classname = "DynamicObject";
-
-    ADD_STRING_HDR(classname.size());
-    stringdata.append(classname);
-    stringdata.append('\0');
-    for (int i = 0; i < _methods.size(); ++i) {
-        ADD_STRING_HDR(_methods[i].name.size());
-        stringdata.append(_methods[i].name);
-        stringdata.append('\0');
-        ADD_STRING_HDR(0);
-        stringdata.append('\0'); // tag
-        for (int j = 0; j < _methods[i].args; ++j) {
-            QString arg = QString::fromUtf8("arg%1").arg(j);
-            ADD_STRING_HDR(arg.size());
-            stringdata.append(arg);
-            stringdata.append('\0');
-        }
-    }
-
-#undef ADD_STRING_HDR
-
-    for (int i = 0; i < stringhdr.size(); ++i) {
-        stringhdr[i].offset += stringhdr.size() * sizeof(ArrayData);
-    }
-
-    char *stringdata_buf = new char[stringhdr.size() * sizeof(ArrayData) + stringdata.size()];
-    memcpy(stringdata_buf, stringhdr.constData(), stringhdr.size() * sizeof(ArrayData));
-    memcpy(stringdata_buf + stringhdr.size() * sizeof(ArrayData), stringdata.data(),
-           stringdata.size());
-    _mo->d.stringdata = (const QByteArrayData *)stringdata_buf;
-
-    /* Build metadata */
-
-    QVector<uint> metadata;
-    metadata.append(7); /* revision */
-    metadata.append(0); /* classname string id */
-    metadata.append(0); metadata.append(0); /* class info */
-    metadata.append(_methods.size()); metadata.append(0xbd); /* method number, list offset */
-    metadata.append(0); metadata.append(0); /* properties */
-    metadata.append(0); metadata.append(0); /* enums */
-    metadata.append(0); metadata.append(0); /* constructors */
-    metadata.append(0); /* flags */
-
-    int n_signals = 0;
-    for (int i = 0; i < _methods.size(); ++i)
-        if (_methods[i].flags == 0x06) ++n_signals;
-    metadata.append(n_signals); /* signals */
-
-    metadata[5] = metadata.size(); /* fixup method list offset */
-    int str_ptr = 1;
-    QList<uint> fixup_offsets;
-    for (int i = 0; i < _methods.size(); ++i) {
-        metadata.append(str_ptr);
-        metadata.append(_methods[i].args);
-        fixup_offsets.append(metadata.size());
-        metadata.append(0xbd); /* argument list offset */
-        metadata.append(str_ptr+1); /* tag. unused */
-        metadata.append(_methods[i].flags); /* public */
-        str_ptr += 2 + _methods[i].args;
-    }
-
-    str_ptr = 3;
-    for (int i = 0; i < _methods.size(); ++i) {
-        metadata[fixup_offsets.takeFirst()] = metadata.size();
-        metadata.append(QMetaType::QVariant);
-        for (int j = 0; j < _methods[i].args; ++j) {
-            metadata.append(QMetaType::QVariant);
-        }
-        for (int j = 0; j < _methods[i].args; ++j) {
-            metadata.append(str_ptr+j);
-        }
-        str_ptr += 2 + _methods[i].args;
-    }
-
-    metadata.append(0);
-
-    uint *metadata_buf = new uint[metadata.size()];
-    memcpy(metadata_buf, metadata.constData(), metadata.size() * sizeof(uint));
-    _mo->d.data = metadata_buf;
-		std::cerr << "QMetaObject created: " << _mo << std::endl;
+		return _builder.addSlot(sig.toUtf8()).index();
 }
 
-QObject* QrsDynamicMetaObject::create(QrsSlotFunction fun, void* data)
-{
-    if (!_mo)
-        finalize();
+int QrsDynamicMetaObject::addSignal(QString const& sig) {
+		if (_metaObject)
+				qFatal("Cannot add signal after object created");
 
-    return new QrsDynamicObject(fun, data, _mo, _methods.size());
+		return _builder.addSignal(sig.toUtf8()).index();
 }
 
-QrsDynamicObject::QrsDynamicObject(QrsSlotFunction* fun, void* data, QMetaObject* mo, int n_slots)
-: QObject(), _fun(fun), _data(data), _mo(mo), _n_slots(n_slots)
+int QrsDynamicMetaObject::addMethod(QString const& sig) {
+		if (_metaObject)
+				qFatal("Cannot add method after object created");
+
+		return _builder.addMethod(sig.toUtf8()).index();
+}
+
+void QrsDynamicMetaObject::addProperty(QString const& name, QString const& type, QString const& sig) {
+		if (_metaObject)
+				qFatal("Cannot add property after object created");
+
+		QMetaPropertyBuilder prop = _builder.addProperty(name.toUtf8(),type.toUtf8(),1);
+
+		prop.setReadable(true);
+		prop.setWritable(true);
+
+		int i = _builder.indexOfMethod(sig.toUtf8());
+		if(i >= 0) {
+			prop.setNotifySignal(_builder.method(i));
+		}
+}
+
+QObject* QrsDynamicMetaObject::instantiate(void)
 {
-	std::cerr << "QObject created: " << this << " from: " << mo << std::endl;
+    if (!_metaObject)
+        _metaObject.reset(_builder.toMetaObject());
+
+    return new QrsDynamicObject(*this);
+}
+
+QMetaObject* QrsDynamicMetaObject::metaObject(void) {
+	return _metaObject.get();
+}
+
+QMetaObject const* QrsDynamicMetaObject::metaObject(void) const {
+	return _metaObject.get();
+}
+
+QVariant QrsDynamicMetaObject::invoke(QObject* self, int id, QVariantList const& args) const {
+	QVariant v;
+	_slotFunction(self,id,&args,&v);
+
+	return v;
+}
+
+QrsDynamicObject::QrsDynamicObject(QrsDynamicMetaObject const& mo)
+: QObject(), _metaObject(mo), _properties(mo.metaObject()->propertyCount(),QVariant())
+{
 }
 
 const QMetaObject* QrsDynamicObject::metaObject() const
 {
-    return _mo;
+    return _metaObject.metaObject();
 }
 
 void* QrsDynamicObject::qt_metacast(const char* )
@@ -152,31 +92,130 @@ void* QrsDynamicObject::qt_metacast(const char* )
 
 int QrsDynamicObject::qt_metacall(QMetaObject::Call c, int id, void** a)
 {
-    id = QObject::qt_metacall(c, id, a);
+	switch(c) {
+		case QMetaObject::InvokeMetaMethod:
+			if (id >= metaObject()->methodCount()) {
+				return QObject::qt_metacall(c,id - metaObject()->methodCount(),a);
+			} else {
+				QMetaMethod mm = metaObject()->method(id);
+				QVariantList argv;
+				int arg = 0;
 
-    if (c == QMetaObject::InvokeMetaMethod) {
-        if (id < _n_slots) {
-            invokeMetacall(id, a);
-        }
-        id -= 1;
-    } else if (c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (id < _n_slots) {
-            *reinterpret_cast<int*>(a[0]) = -1;
-        }
-        id -= 1;
-    }
-    return id;
+				while(arg < mm.parameterCount()) {
+					argv.append(QVariant(mm.parameterType(arg),a[arg+1]));
+					++arg;
+				}
+
+				QVariant r = _metaObject.invoke(this,id - metaObject()->methodOffset(),argv);
+				QMetaType::construct(r.type(),a[0],r.data());
+
+				return -1;
+			}
+		case QMetaObject::ReadProperty:
+			if (id >= _properties.size()) {
+				return QObject::qt_metacall(c,id - _properties.size(),a);
+			} else {
+				QVariant const& val = *std::next(_properties.begin(), id);
+				QMetaType::construct(val.type(),a[0],val.data());
+				return -1;
+			}
+		case QMetaObject::WriteProperty:
+			if (id >= _properties.size()) {
+				return QObject::qt_metacall(c,id - _properties.size(),a);
+			} else {
+				QVariant::Type ty = metaObject()->property(id).type();
+				*std::next(_properties.begin(), id) = QVariant(ty,a[0]);
+				return -1;
+			}
+		case QMetaObject::ResetProperty:
+			if (id >= _properties.size()) {
+				return QObject::qt_metacall(c,id - _properties.size(),a);
+			} else {
+				*std::next(_properties.begin(), id) = QVariant();
+				return -1;
+			}
+		default:
+			/*
+			QMetaObject::QueryPropertyDesignable,
+			QMetaObject::QueryPropertyScriptable,
+			QMetaObject::QueryPropertyStored,
+			QMetaObject::QueryPropertyEditable,
+			QMetaObject::QueryPropertyUser,
+			QMetaObject::CreateInstance,
+			QMetaObject::IndexOfMethod,
+			QMetaObject::RegisterPropertyMetaType,
+			QMetaObject::RegisterMethodArgumentMetaType
+			*/
+			return QObject::qt_metacall(c, id, a);
+	}
 }
 
-void QrsDynamicObject::invokeMetacall(int id, void **args)
+void QrsDynamicObject::emitSignal(int id, QVariantList const& args)
 {
-    if (_fun)
-        _fun(_data, id, (QVariant **)args);
-    else
-        qWarning("QrsDynamicMetaObject: tried to invoke metacall but handler not set");
+	if(id + metaObject()->methodOffset() >= metaObject()->methodCount()) {
+		qFatal("no method with id %d",id);
+	}
+
+	QMetaMethod mm = metaObject()->method(id + metaObject()->methodOffset());
+
+	if(mm.parameterCount() != args.size()) {
+		qWarning("method '%s' expects %d parameters, got %d",
+				mm.name().toStdString().c_str(),mm.parameterCount(),args.size());
+		return;
+	}
+
+	if(mm.methodType() != QMetaMethod::Signal) {
+		qFatal("'%s' is not a signal",mm.name().toStdString().c_str());
+	}
+
+	std::vector<QVariant*> argv{args.size(),nullptr};
+	int i = 0;
+
+	while(i < args.size()) {
+		argv[i] = new QVariant(args[i]);
+		++i;
+	}
+
+	QMetaObject::activate(this, metaObject(), id + metaObject()->methodCount(), reinterpret_cast<void**>(argv.data()));
+
+	for(auto v: argv)
+		delete v;
 }
 
-void QrsDynamicObject::emitSignal(int id)
-{
-    QMetaObject::activate(this, _mo, id, Q_NULLPTR);
+QVariant QrsDynamicObject::callMethod(int id, QVariantList const& args) {
+	if(id + metaObject()->methodOffset() >= metaObject()->methodCount()) {
+		qFatal("no method with id %d",id);
+	}
+
+	QMetaMethod mm = metaObject()->method(id + metaObject()->methodOffset());
+
+	if(mm.parameterCount() != args.size()) {
+		qWarning("method '%s' expects %d parameters, got %d",
+				mm.name().toStdString().c_str(),mm.parameterCount(),args.size());
+		return QVariant();
+	}
+
+	if(mm.methodType() == QMetaMethod::Signal) {
+		qFatal("'%s' is a signal",mm.name().toStdString().c_str());
+	}
+
+	QVariant returned;
+
+	QGenericArgument a0, a1, a2, a3, a4, a5, a6, a7, a8, a9;
+	if (args.size() > 9) a9 = Q_ARG(QVariant, args[9]);
+	if (args.size() > 8) a8 = Q_ARG(QVariant, args[8]);
+	if (args.size() > 7) a7 = Q_ARG(QVariant, args[7]);
+	if (args.size() > 6) a6 = Q_ARG(QVariant, args[6]);
+	if (args.size() > 5) a5 = Q_ARG(QVariant, args[5]);
+	if (args.size() > 4) a4 = Q_ARG(QVariant, args[4]);
+	if (args.size() > 3) a3 = Q_ARG(QVariant, args[3]);
+	if (args.size() > 2) a2 = Q_ARG(QVariant, args[2]);
+	if (args.size() > 1) a1 = Q_ARG(QVariant, args[1]);
+	if (args.size() > 0) a0 = Q_ARG(QVariant, args[0]);
+
+	mm.invoke(this,
+			Q_RETURN_ARG(QVariant, returned),
+			a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+
+	return returned;
 }

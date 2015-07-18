@@ -1,18 +1,17 @@
 #[macro_export]
 macro_rules! Q_OBJECT(
     (
-        $t:ty [ $c:ident ]
-        slots:
+        $t:ty :
             $(
-                fn $name:ident ( $($at:ty),* );
+                slot fn $name:ident ( $($at:ty),* );
             )*
-        signals:
+/*
             $(
-                fn $sname:ident ( );
+                signal fn $sname:ident ( );
             )*
-
+*/
     ) => (
-
+/*
         impl $t {
             #[allow(dead_code, unused_mut, unused_variables, unused_assignments)]
             fn __qmlrs_signal_id(&self, name: &str) -> u32 {
@@ -22,52 +21,48 @@ macro_rules! Q_OBJECT(
                         return id;
                     }
                     id += 1;
-                )*
+                )+
                 panic!("__qmlrs_signal_id called with invalid signal name!");
             }
 
             $(
                 #[allow(dead_code)]
                 fn $sname (&self) {
-                    println!("call {}",stringify!($sname));
-                    qmlrs::__qobject_emit(self.qt_metaobject().ins, self.__qmlrs_signal_id(stringify!($sname)));
+                    qmlrs::__qobject_emit(self, self.__qmlrs_signal_id(stringify!($sname)));
                 }
-            )*
+            )+
         }
-
-
-        static mut $c: Option<qmlrs::MetaObject> = None;
-
+*/
         impl qmlrs::Object for $t {
             #[allow(unused_mut, unused_variables)]
-            fn qt_metaobject(&self) -> &'static qmlrs::MetaObject {
-                unsafe {
-                    if $c.is_none() {
-                        let x = qmlrs::MetaObject::new();
-                        $(
-                            let mut argc = 0;
-                            $(
-                                let _: $at;
-                                argc += 1;
-                            )*
-                            let x = x.slot(stringify!($name), argc);
-                        )*
-
-                        $(
-                            let x = x.signal(stringify!($sname), 0);
-                        )*
-
-                        $c = Some(x)
-                    }
-                    return $c.as_ref().unwrap();
-                }
+            fn qt_metaobject(&self) -> qmlrs::MetaObject {
+                let x = qmlrs::MetaObject::new();
+/*
+                $(
+                    let x = x.signal(stringify!($sname), 0);
+                )+
+*/
+                $(
+                    let mut argc = 0;
+                    $(
+                        let _: $at;
+                        argc += 1;
+                    )*
+                    let x = x.slot(stringify!($name), argc);
+                )+
+                x
             }
 
             #[allow(unused_assignments, unused_mut, unused_variables)]
             fn qt_metacall(&mut self, slot: i32, args: *const *const qmlrs::OpaqueQVariant) {
                 use qmlrs::ToQVariant;
                 let mut i = 0;
-
+/*
+                $(
+                    let _ = stringify!($sname);
+                    i += 1;
+                )+
+*/
                 $(
                     if i == slot {
                         let mut argi = 1u8; /* 0 is for return value */
@@ -89,15 +84,8 @@ macro_rules! Q_OBJECT(
                         return
                     }
                     i += 1;
-                )*
-
-                $(
-                    let _ = stringify!($sname);
-                    i += 1;
-                )*
-
+                )+
             }
-
         }
     )
 );
