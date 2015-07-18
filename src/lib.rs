@@ -1,8 +1,8 @@
 extern crate libc;
 
-use libc::{c_char, c_int, c_uint, c_void};
+use libc::{c_char, c_uint, c_int};
 use std::sync::Arc;
-use ffi::{QVariant, QrsEngine, QObject};
+use ffi::{QrsEngine, QObject};
 use std::path::Path;
 use std::convert::AsRef;
 
@@ -14,32 +14,10 @@ pub use ffi::QVariant as OpaqueQVariant;
 /* Submodules */
 
 #[allow(dead_code)]
-mod ffi;
+pub mod ffi;
 mod macros;
-mod variant;
+pub mod variant;
 
-/*
-pub trait Object {
-    fn qt_metaobject(&self) -> &'static MetaObject;
-    fn qt_metacall(&mut self, slot: i32, args: *const *const OpaqueQVariant);
-    //fn qt_emit(&self, signal: &str);
-}
-
-pub fn __qobject_emit<T: Object>(obj: &T, id: u32) {
-    unsafe {
-        ffi::qmlrs_object_emit_signal(get_qobject(obj), id as c_uint);
-    }
-}
-
-/* This is unsafe in case the user copies the data. Might need to figure out something different. */
-fn get_qobject<T: Object>(ptr: &T) -> *mut QObject {
-    unsafe {
-        let t_addr: usize = std::mem::transmute(ptr);
-        let hdr: &PropHdr<T> = std::mem::transmute(t_addr - std::mem::size_of::<*mut QObject>());
-        hdr.qobj
-    }
-}
-*/
 struct EngineInternal {
     p: *mut QrsEngine,
 }
@@ -56,23 +34,6 @@ impl Drop for EngineInternal {
 
 pub struct Engine {
     i: Arc<EngineInternal>,
-}
-
-/*
-#[repr(packed)]
-struct PropHdr<T: Object> {
-    qobj: *mut QObject,
-    obj: T
-}
-*/
-
-extern "C" fn slot_handler(data: *mut c_void, slot: c_int,
-                                      args: *const *const ffi::QVariant)
-{
-  /*  unsafe {
-        let hdr: &mut PropHdr<T> = std::mem::transmute(data);
-        hdr.obj.qt_metacall(slot as i32, args);
-    }*/
 }
 
 impl Engine {
@@ -133,12 +94,6 @@ impl Engine {
         unsafe { ffi::qmlrs_app_exec(); }
     }
 
-    /*
-    pub fn handle(&self) -> Handle {
-        Handle { i: self.i.downgrade() }
-    }
-    */
-
     pub fn set_property(&mut self, name: &str, obj: &Object) {
         unsafe {
             ffi::qmlrs_engine_set_property(self.i.p, name.as_ptr() as *const c_char,
@@ -153,86 +108,112 @@ pub struct MetaObject {
 }
 
 impl MetaObject {
-    pub fn new() -> MetaObject {
-        let p = unsafe { ffi::qmlrs_metaobject_create() };
+    pub fn new(name: &str, fun: ffi::SlotFunction) -> MetaObject {
+        let p = unsafe { ffi::qmlrs_metaobject_create(name.as_ptr() as *const c_char,name.len() as c_uint,fun) };
         assert!(!p.is_null());
 
         MetaObject { p: p }
     }
 
-    pub fn slot(self, name: &str, argc: u8) -> MetaObject {
-        unsafe {
-            ffi::qmlrs_metaobject_add_slot(self.p, name.as_ptr() as *const c_char,
-                                           name.len() as c_uint, argc as c_uint);
-        }
-        self
+    pub fn add_signal(&mut self, sig: &str) -> isize {
+        unsafe { ffi::qmlrs_metaobject_add_signal(self.p,sig.as_ptr() as *const c_char,sig.len() as c_uint) as isize }
     }
 
-    pub fn signal(self, name: &str, argc: u8) -> MetaObject {
+    pub fn add_property(&mut self, name: &str, ty: &str, signal: Option<&str>) {
         unsafe {
-            ffi::qmlrs_metaobject_add_signal(self.p, name.as_ptr() as *const c_char,
-                                             name.len() as c_uint, argc as c_uint);
-        }
-        self
-    }
-
-    pub fn instantiate(&self) -> Object {
-        unsafe {
-            let mo = self.p;
-            let qobj = ffi::qmlrs_metaobject_instantiate(mo);
-
-            Object{ p: qobj }
+            if let Some(sig) = signal {
+                ffi::qmlrs_metaobject_add_property(self.p,name.as_ptr() as *const c_char,name.len() as c_uint,
+                                                   ty.as_ptr() as *const c_char, ty.len() as c_uint,
+                                                   sig.as_ptr() as *const c_char, sig.len() as c_uint);
+            } else {
+                let s = "";
+                ffi::qmlrs_metaobject_add_property(self.p,name.as_ptr() as *const c_char,name.len() as c_uint,
+                                                   ty.as_ptr() as *const c_char,ty.len() as c_uint,
+                                                   s.as_ptr() as *const c_char, 0);
+            }
         }
     }
 
+    pub fn add_slot(&mut self, sig: &str) -> isize {
+        unsafe { ffi::qmlrs_metaobject_add_slot(self.p,sig.as_ptr() as *const c_char,sig.len() as c_uint) as isize }
+    }
+
+    pub fn add_method(&mut self, sig: &str) -> isize {
+        unsafe { ffi::qmlrs_metaobject_add_method(self.p,sig.as_ptr() as *const c_char,sig.len() as c_uint) as isize }
+    }
+
+    pub fn instantiate(&mut self) -> Object {
+        Object{ p: unsafe {
+            ffi::qmlrs_metaobject_instantiate(self.p)
+        } }
+    }
 }
 
-#[derive(Clone)]
 pub struct Object {
     p: *mut ffi::QObject
 }
 
-/*
-pub struct Handle {
-    i: Weak<EngineInternal>
-}
-
-impl Handle {
-    pub fn invoke(&self, method: &str, args: &[Variant]) -> Result<Option<Variant>, &'static str> {
+impl Object {
+    pub fn set_property(&mut self, name: &str, value: Variant) {
         unsafe {
-            let cstr = method.to_c_str();
+            let var = ffi::qmlrs_variant_create();
+            value.to_qvariant(var);
 
-            let c_args = ffi::qmlrs_varlist_create();
-            assert!(!c_args.is_null());
-            for arg in args.iter() {
-                let c_arg = ffi::qmlrs_varlist_push(c_args);
-                assert!(!c_arg.is_null());
-                arg.to_qvariant(c_arg);
-            }
-
-            let result = ffi::qmlrs_variant_create();
-            assert!(!result.is_null());
-
-            match self.i.upgrade() {
-                Some(i) => ffi::qmlrs_engine_invoke(i.p, cstr.as_ptr(), result,
-                                               c_args as *const QVariantList),
-                None    => {
-                    ffi::qmlrs_variant_destroy(result);
-                    ffi::qmlrs_varlist_destroy(c_args);
-                    return Err("View has been freed")
-                }
-            }
-
-            ffi::qmlrs_varlist_destroy(c_args);
-
-            let ret = FromQVariant::from_qvariant(result as *const QVariant);
-            ffi::qmlrs_variant_destroy(result);
-
-            Ok(ret)
+            ffi::qmlrs_object_set_property(self.p,name.as_ptr() as *const c_char,name.len() as c_uint,var);
+            ffi::qmlrs_variant_destroy(var);
         }
     }
+
+    pub fn get_property(&self, name: &str) -> Variant {
+        unsafe {
+            let var = ffi::qmlrs_variant_create();
+
+            ffi::qmlrs_object_get_property(self.p,name.as_ptr() as *const c_char,name.len() as c_uint,var);
+            let ret = Variant::from_qvariant(var);
+
+            ffi::qmlrs_variant_destroy(var);
+            ret.unwrap()
+        }
+    }
+
+    pub fn call(&self, id: isize, args: &[Variant]) -> Option<Variant> {
+        unsafe {
+            let vl = ffi::qmlrs_varlist_create();
+            let ret = ffi::qmlrs_variant_create();
+
+            for v in args {
+                let var = ffi::qmlrs_varlist_push(vl);
+                v.to_qvariant(var);
+            }
+
+            ffi::qmlrs_object_call(self.p, id as c_int, vl, ret);
+            ffi::qmlrs_varlist_destroy(vl);
+
+            let r = Variant::from_qvariant(ret);
+            ffi::qmlrs_variant_destroy(ret);
+
+            r
+        }
+    }
+
+    pub fn emit(&self, id: isize, args: &[Variant]) {
+        unsafe {
+            let vl = ffi::qmlrs_varlist_create();
+
+            for v in args {
+                let var = ffi::qmlrs_varlist_push(vl);
+                v.to_qvariant(var);
+            }
+
+            ffi::qmlrs_object_emit(self.p, id as c_int, vl);
+            ffi::qmlrs_varlist_destroy(vl);
+        }
+    }
+
+    pub fn delete_later(&mut self) {
+        unsafe { ffi::qmlrs_object_delete_later(self.p) };
+    }
 }
-*/
 
 #[cfg(test)]
 mod test {
