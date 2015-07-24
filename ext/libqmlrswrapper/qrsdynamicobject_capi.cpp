@@ -1,7 +1,14 @@
 #include <iostream>
-#include <QtQml>
 
 #include "qrsdynamicobject.h"
+
+extern "C" void qmlrs_register_singleton_type(const char* uri, unsigned int uri_len, int major, int minor,
+																				const char* type, unsigned int type_len, QrsSingletonFunction fun) {
+    QString module = QString::fromUtf8(uri, uri_len);
+    QString typenam = QString::fromUtf8(type, type_len);
+
+		qmlRegisterSingletonType<QObject>(module.toStdString().c_str(),major,minor,typenam.toStdString().c_str(),fun);
+}
 
 extern "C" QrsDynamicMetaObject *qmlrs_metaobject_create(const char* name, unsigned int name_len, QrsSlotFunction fun) {
     QString n = QString::fromUtf8(name, name_len);

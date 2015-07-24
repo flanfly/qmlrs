@@ -213,6 +213,10 @@ impl Object {
     pub fn delete_later(&mut self) {
         unsafe { ffi::qmlrs_object_delete_later(self.p) };
     }
+
+    pub fn as_ptr(&mut self) -> *mut QObject {
+        self.p
+    }
 }
 
 #[cfg(test)]

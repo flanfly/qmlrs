@@ -5,6 +5,8 @@ use libc::{c_char, c_int, c_uint};
 pub enum QrsEngine {}
 pub enum QrsMetaObject {}
 pub enum QObject {}
+pub enum QQmlEngine {}
+pub enum QJSEngine {}
 pub enum QVariant {}
 pub enum QVariantList {}
 
@@ -18,8 +20,12 @@ pub enum QrsVariantType {
 }
 
 pub type SlotFunction = extern "C" fn(this: *mut QObject, id: c_int, args: *const QVariantList, ret: *mut QVariant);
+pub type SingletonFunction = extern "C" fn(qml: *mut QQmlEngine, js: *mut QJSEngine) -> *mut QObject;
 
 extern "C" {
+    pub fn qmlrs_register_singleton_type(uri: *const c_char, uri_len: c_uint, major: c_int, minor: c_int,
+                                         typenam: *const c_char, typenam_len: c_uint, fun: SingletonFunction);
+
     pub fn qmlrs_create_engine() -> *mut QrsEngine;
     pub fn qmlrs_create_engine_headless() -> *mut QrsEngine;
     pub fn qmlrs_destroy_engine(engine: *mut QrsEngine);

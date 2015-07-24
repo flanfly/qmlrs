@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <QtCore>
+#include <QtQml>
 #include "private/qmetaobjectbuilder_p.h"
 
 #if Q_MOC_OUTPUT_REVISION != 67
@@ -10,6 +11,7 @@
 #endif
 
 extern "C" typedef void *(QrsSlotFunction)(void *data, int slot, QVariantList const* args,QVariant *retval);
+extern "C" typedef QObject *(QrsSingletonFunction)(QQmlEngine*,QJSEngine*);
 
 class QrsDynamicMetaObject
 {
