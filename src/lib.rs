@@ -219,6 +219,15 @@ impl Object {
     }
 }
 
+pub fn register_singleton_type(module: &str, major: isize, minor: isize, typenam: &str, fun: ffi::SingletonFunction) {
+    unsafe {
+        ffi::qmlrs_register_singleton_type(module.as_ptr() as *const c_char,module.len() as c_uint,
+                                           major as c_int,minor as c_int,
+                                           typenam.as_ptr() as *const c_char,typenam.len() as c_uint,
+                                           fun);
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

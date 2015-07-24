@@ -20,9 +20,7 @@ pub fn singleton_test() {
         obj.as_ptr()
     }
 
-    unsafe {
-        ffi::qmlrs_register_singleton_type("Test".as_ptr() as *const libc::c_char,4,1,2,"Person".as_ptr() as *const libc::c_char,6,singleton);
-    }
+    register_singleton_type(&"Test",1,2,&"Person",singleton);
 
     engine.load_local_file("tests/singleton.qml");
     engine.exec();
