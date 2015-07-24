@@ -29,9 +29,9 @@ extern "C" int qmlrs_metaobject_add_signal(QrsDynamicMetaObject *mo, const char 
     return mo->addSignal(QString::fromUtf8(sig, sig_len));
 }
 
-extern "C" int qmlrs_metaobject_add_method(QrsDynamicMetaObject *mo, const char *sig, unsigned int sig_len)
+extern "C" int qmlrs_metaobject_add_method(QrsDynamicMetaObject *mo, const char *sig, unsigned int sig_len, const char *ret, unsigned int ret_len)
 {
-    return mo->addMethod(QString::fromUtf8(sig, sig_len));
+    return mo->addMethod(QString::fromUtf8(sig, sig_len),QString::fromUtf8(ret, ret_len));
 }
 
 extern "C" void qmlrs_metaobject_add_property(QrsDynamicMetaObject *mo, const char *name, unsigned int name_len,

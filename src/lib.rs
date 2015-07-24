@@ -138,8 +138,11 @@ impl MetaObject {
         unsafe { ffi::qmlrs_metaobject_add_slot(self.p,sig.as_ptr() as *const c_char,sig.len() as c_uint) as isize }
     }
 
-    pub fn add_method(&mut self, sig: &str) -> isize {
-        unsafe { ffi::qmlrs_metaobject_add_method(self.p,sig.as_ptr() as *const c_char,sig.len() as c_uint) as isize }
+    pub fn add_method(&mut self, sig: &str, ret: &str) -> isize {
+        unsafe {
+            ffi::qmlrs_metaobject_add_method(self.p,sig.as_ptr() as *const c_char,sig.len() as c_uint,
+                                             ret.as_ptr() as *const c_char,ret.len() as c_uint) as isize
+        }
     }
 
     pub fn instantiate(&mut self) -> Object {

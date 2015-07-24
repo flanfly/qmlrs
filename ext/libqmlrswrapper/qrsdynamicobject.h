@@ -20,7 +20,7 @@ public:
     virtual ~QrsDynamicMetaObject();
 
 		int addSlot(QString const& sig);
-		int addMethod(QString const& sig);
+		int addMethod(QString const& sig,QString const& ret);
 		int addSignal(QString const& sig);
 		void addProperty(QString const& name, QString const& type, QString const& sig);
 

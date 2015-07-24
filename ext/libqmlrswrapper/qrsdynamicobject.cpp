@@ -30,11 +30,11 @@ int QrsDynamicMetaObject::addSignal(QString const& sig) {
 		return _builder.addSignal(sig.toUtf8()).index();
 }
 
-int QrsDynamicMetaObject::addMethod(QString const& sig) {
+int QrsDynamicMetaObject::addMethod(QString const& sig, QString const& ret) {
 		if (_metaObject)
 				qFatal("Cannot add method after object created");
 
-		return _builder.addMethod(sig.toUtf8()).index();
+		return _builder.addMethod(sig.toUtf8(),ret.toUtf8()).index();
 }
 
 void QrsDynamicMetaObject::addProperty(QString const& name, QString const& type, QString const& sig) {
@@ -184,6 +184,7 @@ void QrsDynamicObject::emitSignal(int id, QVariantList const& args)
 
 QVariant QrsDynamicObject::callMethod(int id, QVariantList const& args) {
 	if(id + metaObject()->methodOffset() >= metaObject()->methodCount()) {
+		std::cerr << "fatal" << std::endl;
 		qFatal("no method with id %d",id);
 	}
 
@@ -213,9 +214,12 @@ QVariant QrsDynamicObject::callMethod(int id, QVariantList const& args) {
 	if (args.size() > 1) a1 = Q_ARG(QVariant, args[1]);
 	if (args.size() > 0) a0 = Q_ARG(QVariant, args[0]);
 
-	mm.invoke(this,
+	if(mm.returnType() == QMetaType::Void) {
+		mm.invoke(this,a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	} else {
+		mm.invoke(this,
 			Q_RETURN_ARG(QVariant, returned),
 			a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
-
+	}
 	return returned;
 }

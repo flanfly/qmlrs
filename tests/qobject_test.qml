@@ -17,6 +17,7 @@ Item {
 			person_one.name = "Lutz";
 
 			person_one.func(42);
+			person_one.test_slot();
 
 			timer2.triggered.connect(person_one.test_slot);
 			timer2.running = true;

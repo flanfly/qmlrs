@@ -59,7 +59,8 @@ extern "C" {
     pub fn qmlrs_metaobject_create(name: *const c_char, name_len: c_uint, slot_func: SlotFunction) -> *mut QrsMetaObject;
     pub fn qmlrs_metaobject_destroy(mo: *mut QrsMetaObject);
     pub fn qmlrs_metaobject_add_slot(mo: *mut QrsMetaObject, sig: *const c_char, sig_len: c_uint) -> c_int;
-    pub fn qmlrs_metaobject_add_method(mo: *mut QrsMetaObject, sig: *const c_char, sig_len: c_uint) -> c_int;
+    pub fn qmlrs_metaobject_add_method(mo: *mut QrsMetaObject, sig: *const c_char, sig_len: c_uint,
+                                       ret: *const c_char, ret_len: c_uint) -> c_int;
     pub fn qmlrs_metaobject_add_signal(mo: *mut QrsMetaObject, sig: *const c_char, sig_len: c_uint) -> c_int;
     pub fn qmlrs_metaobject_add_property(obj: *mut QrsMetaObject, name: *const c_char, name_len: c_uint, typ: *const c_char,
                                          typ_len: c_uint, typ: *const c_char, typ_len: c_uint);
