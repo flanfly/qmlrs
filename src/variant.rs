@@ -1,6 +1,6 @@
 use libc::{c_char, c_uint};
 use ffi;
-use ffi::{QVariant, QrsVariantType};
+use ffi::{QVariant, QrsVariantType, QVariantList};
 
 pub enum Variant {
     I64(i64),
@@ -135,4 +135,21 @@ impl ToQVariant for Variant {
             Variant::String(ref s) => s.to_qvariant(var),
         }
     }
+}
+
+pub fn unpack_varlist(p: *const QVariantList) -> Vec<Variant> {
+    let mut ret = Vec::new();
+    let mut i = 0;
+    let len = unsafe { ffi::qmlrs_varlist_length(p) };
+
+    while i < len {
+        let x = unsafe { ffi::qmlrs_varlist_get(p,i) };
+        if let Some(v) = Variant::from_qvariant(x) {
+            ret.push(v)
+        }
+
+        i += 1;
+    }
+
+    ret
 }

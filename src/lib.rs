@@ -8,7 +8,7 @@ use std::convert::AsRef;
 
 /* Re-exports */
 
-pub use variant::{Variant, FromQVariant, ToQVariant};
+pub use variant::{Variant, FromQVariant, ToQVariant, unpack_varlist};
 pub use ffi::QVariant as OpaqueQVariant;
 
 /* Submodules */
@@ -157,6 +157,10 @@ pub struct Object {
 }
 
 impl Object {
+    pub fn from_ptr(p: *mut ffi::QObject) -> Object {
+        Object{ p: p }
+    }
+
     pub fn set_property(&mut self, name: &str, value: Variant) {
         unsafe {
             let var = ffi::qmlrs_variant_create();
