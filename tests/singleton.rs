@@ -17,6 +17,7 @@ pub fn singleton_test() {
 
         let mut obj = metaobj.instantiate();
         obj.set_property("name",Variant::String("Kai".to_string()));
+        obj.get_property("name");
         obj.as_ptr()
     }
 

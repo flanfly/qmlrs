@@ -55,6 +55,15 @@ extern "C" void qmlrs_object_set_property(QrsDynamicObject *obj, const char *nam
     prop.write(*val);
 }
 
+extern "C" void qmlrs_object_get_property(QrsDynamicObject *obj, const char *name, uint name_len,
+                                            QVariant* val)
+{
+    QString n = QString::fromUtf8(name, name_len);
+    QQmlProperty prop(obj,n);
+
+    *val = prop.read();
+}
+
 extern "C" void qmlrs_object_call(QrsDynamicObject *obj, int id, QVariantList const* args, QVariant *ret) {
 	*ret = obj->callMethod(id,*args);
 }
