@@ -176,7 +176,7 @@ void QrsDynamicObject::emitSignal(int id, QVariantList const& args)
 		++i;
 	}
 
-	QMetaObject::activate(this, metaObject(), id + metaObject()->methodCount(), reinterpret_cast<void**>(argv.data()));
+	QMetaObject::activate(this, metaObject(), id, reinterpret_cast<void**>(argv.data()));
 
 	for(auto v: argv)
 		delete v;
