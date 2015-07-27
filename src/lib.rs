@@ -156,6 +156,8 @@ pub struct Object {
     p: *mut ffi::QObject
 }
 
+unsafe impl Send for Object { }
+
 impl Object {
     pub fn from_ptr(p: *mut ffi::QObject) -> Object {
         Object{ p: p }
