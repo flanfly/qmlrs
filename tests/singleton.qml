@@ -7,8 +7,8 @@ Item {
 		Person.test()
 	}
 
-	function testCB() {
-		console.log("testCB called");
+	function testCB(s) {
+		console.log("testCB called: " + s);
 	}
 
   Timer {

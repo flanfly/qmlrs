@@ -11,14 +11,14 @@ pub fn singleton_test() {
     extern "C" fn slot(p: *mut ffi::QObject, id: libc::c_int, _: *const ffi::QVariantList, _: *mut ffi::QVariant) {
         println!("id: {}",id);
         if id == 2 {
-            Object::from_ptr(p).emit(1,&[]);
+            Object::from_ptr(p).emit(1,&[Variant::String("hello".to_string())]);
         }
     }
     extern "C" fn singleton(_: *mut ffi::QQmlEngine, _: *mut ffi::QJSEngine) -> *mut ffi::QObject {
         let mut metaobj = MetaObject::new("Person",slot);
 
         assert_eq!(metaobj.add_signal("nameChanged()"),0);
-        assert_eq!(metaobj.add_signal("testSignal()"),1);
+        assert_eq!(metaobj.add_signal("testSignal(QString)"),1);
         metaobj.add_property("name","QString",Some("nameChanged()"));
         assert_eq!(metaobj.add_method("test()","void"),2);
 
