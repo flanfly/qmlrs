@@ -160,12 +160,12 @@ void QrsDynamicObject::emitSignal(int id, QVariantList const& args)
 
 	if(mm.parameterCount() != args.size()) {
 		qWarning("method '%s' expects %d parameters, got %d",
-				mm.name().toStdString().c_str(),mm.parameterCount(),args.size());
+				mm.name().constData(),mm.parameterCount(),args.size());
 		return;
 	}
 
 	if(mm.methodType() != QMetaMethod::Signal) {
-		qFatal("'%s' is not a signal",mm.name().toStdString().c_str());
+		qFatal("'%s' is not a signal",mm.name().constData());
 	}
 
 	std::vector<QVariant*> argv;
@@ -198,12 +198,12 @@ QVariant QrsDynamicObject::callMethod(int id, QVariantList const& args) {
 
 	if(mm.parameterCount() != args.size()) {
 		qWarning("method '%s' expects %d parameters, got %d",
-				mm.name().toStdString().c_str(),mm.parameterCount(),args.size());
+				mm.name().constData(),mm.parameterCount(),args.size());
 		return QVariant();
 	}
 
 	if(mm.methodType() == QMetaMethod::Signal) {
-		qFatal("'%s' is a signal",mm.name().toStdString().c_str());
+		qFatal("'%s' is a signal",mm.name().constData());
 	}
 
 	QVariant returned;
