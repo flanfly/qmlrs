@@ -2,6 +2,7 @@ use libc::{c_char, c_uint};
 use ffi;
 use ffi::{QVariant, QrsVariantType, QVariantList};
 
+#[derive(PartialEq,Eq,Clone,Debug)]
 pub enum Variant {
     I64(i64),
     Bool(bool),
