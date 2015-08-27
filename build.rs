@@ -16,13 +16,20 @@ fn main() {
     if cfg!(windows) && is_msys {
         myargs.push("-GMSYS Makefiles") ;
     }
-    Command::new("cmake").args(&myargs).current_dir(&build).output().unwrap_or_else(|e| {
-        panic!("Failed to run cmake: {}", e);
-    });
 
-    Command::new("make").current_dir(&build).output().unwrap_or_else(|e| {
-        panic!("Failed to run make: {}", e);
-    });
+    Command::new("cmake")
+        .args(&myargs)
+        .current_dir(&build)
+        .status().and_then(|x| Ok(x.success()) ).unwrap_or_else(|e| {
+            panic!("Failed to run cmake: {}", e);
+        });
+
+    Command::new("cmake")
+        .args(&vec!["--build","."])
+        .current_dir(&build)
+        .status().and_then(|x| Ok(x.success()) ).unwrap_or_else(|e| {
+            panic!("Failed to run build: {}", e);
+        });
 
     if cfg!(windows) && is_msys {
         println!("cargo:rustc-link-search=native={}\\system32",env::var("WINDIR").unwrap());
