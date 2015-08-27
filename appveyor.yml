@@ -33,7 +33,7 @@ test_script:
   - cd ext\libqmlrswrapper
   - md build
   - cd build
-  - cmake ..
+  - cmake "-GMSYS Makefiles" ..
   - cmake --build .
   - cd ..\..\..
   - cargo build --verbose

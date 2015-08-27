@@ -7,22 +7,22 @@ use std::path::PathBuf;
 
 fn main() {
     let wcd = env::current_dir().unwrap();
-    let build = PathBuf::from(&wcd.join("ext/libqmlrswrapper/build"));
+    let mut build = PathBuf::from(&wcd.join("ext/libqmlrswrapper/build"));
 
     let _ = fs::create_dir_all(&build);
 
     let mut myargs = vec![".."] ;
     let is_msys = env::var("MSYSTEM").is_ok() ;
-    if cfg!(windows) && is_msys {
+    if cfg!(windows) {
         myargs.push("-GMSYS Makefiles") ;
     }
 
-    Command::new("cmake")
+    println!("{}",Command::new("cmake")
         .args(&myargs)
         .current_dir(&build)
         .status().and_then(|x| Ok(x.success()) ).unwrap_or_else(|e| {
             panic!("Failed to run cmake: {}", e);
-        });
+        }));
 
     Command::new("cmake")
         .args(&vec!["--build","."])
