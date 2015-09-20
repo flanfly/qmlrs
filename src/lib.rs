@@ -157,6 +157,7 @@ pub struct Object {
 }
 
 unsafe impl Send for Object { }
+unsafe impl Sync for Object { }
 
 impl Object {
     pub fn from_ptr(p: *mut ffi::QObject) -> Object {
