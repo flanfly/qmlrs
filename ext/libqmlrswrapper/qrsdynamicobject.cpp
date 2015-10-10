@@ -221,9 +221,9 @@ QVariant QrsDynamicObject::callMethod(int id, QVariantList const& args) {
 	if (args.size() > 0) a0 = Q_ARG(QVariant, args[0]);
 
 	if(mm.returnType() == QMetaType::Void) {
-		mm.invoke(this,a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+		mm.invoke(this,Qt::BlockingQueuedConnection,a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 	} else {
-		mm.invoke(this,
+		mm.invoke(this,Qt::BlockingQueuedConnection,
 			Q_RETURN_ARG(QVariant, returned),
 			a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 	}
