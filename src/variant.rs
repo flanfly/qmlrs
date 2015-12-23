@@ -9,7 +9,7 @@ pub enum Variant {
     String(String),
 }
 
-pub trait FromQVariant {
+pub trait FromQVariant: Sized {
     fn from_qvariant(arg: *const QVariant) -> Option<Self>;
 }
 
