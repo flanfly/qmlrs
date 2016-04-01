@@ -53,9 +53,9 @@ fn main() {
         }
     }
 
+    let mut myargs = vec![];
     if cfg!(windows) {
         let is_msys = env::var("MSYSTEM").is_ok();
-        let mut myargs = vec![];
 
         if is_msys {
             myargs.push("-GMSYS Makefiles");
@@ -64,20 +64,16 @@ fn main() {
         }
 
         myargs.push("..");
-
-        Command::new("cmake")
-            .args(&myargs)
-            .current_dir(&build)
-            .status().and_then(|x| Ok(x.success()) ).unwrap_or_else(|e| {
-                panic!("Failed to run cmake: {}", e);
-            });
     } else {
-        Command::new("cmake")
-            .args(&vec![".."])
-            .current_dir(&build)
-            .status().and_then(|x| Ok(x.success()) ).unwrap_or_else(|e| {
-                panic!("Failed to run cmake: {}", e);
-            });
+        myargs.push("..");
+    }
+
+    let cmake_output = Command::new("cmake").args(&myargs).current_dir(&build).output().unwrap_or_else(|e| {
+        panic!("Failed to run cmake: {}", e);
+    });
+    let cmake_stderr = String::from_utf8(cmake_output.stderr).unwrap();
+    if !cmake_stderr.is_empty() {
+        panic!("cmake produced stderr: {}", cmake_stderr);
     }
 
     Command::new("cmake")
