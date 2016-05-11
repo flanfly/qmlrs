@@ -77,11 +77,16 @@ fn main() {
         myargs.push("..");
     }
 
+
     let cmake_output = Command::new("cmake").args(&myargs).current_dir(&build).output().unwrap_or_else(|e| {
         panic!("Failed to run cmake: {}", e);
     });
+
     let cmake_stderr = String::from_utf8(cmake_output.stderr).unwrap();
+
     if !cmake_stderr.is_empty() {
+        // Check for nvidia issue
+        check_qt_egl_reference_error(cmake_stderr.clone());
         panic!("cmake produced stderr: {}", cmake_stderr);
     }
 
@@ -107,5 +112,25 @@ fn main() {
         println!("cargo:rustc-link-search=native={}{}",build.display(),if cfg!(windows) { "\\Debug" } else { "" });
         println!("cargo:rustc-link-lib=dylib=stdc++");
         pkg_config::find_library("Qt5Core Qt5Gui Qt5Qml Qt5Quick").unwrap();
+    }
+}
+
+// This function checks for a special, more confusing, case of cmake failure.
+// Nvidia installer creates a faulty set of symbolic links that confuse the Qt
+// compilation process, we directly check the error message rather than checking
+// the library paths so we can ensure we're tracking the exact issue.
+fn check_qt_egl_reference_error(err_str: String) {
+    let error_preface = "The imported target \"Qt5::Gui\" references the file";
+    // Check if we have both the error preface
+    if err_str.contains(error_preface) &&
+        // .. and we include libGL in the error message
+        (err_str.contains("libEGL.so") || err_str.contains("libGL.so")) {
+
+        println!("It appears cmake has failed to build because of a bad symlink
+        to libEGL.so or libGL.so, this error typically occurs because the NVidia
+        installer fails to to repair the links to existing libGL bindings --
+        remove the bad symbolic link (typically located at /usr/lib64/libGL.so)
+        and ensure that you have a symbolic link to an existing copy of both
+        libraries .");
     }
 }
