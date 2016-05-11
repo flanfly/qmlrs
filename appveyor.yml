@@ -1,19 +1,14 @@
-os: unstable
 platform:
   - x64
 environment:
   RUST_INSTALL_DIR: C:\Rust
   matrix:
     - RUST_INSTALL_TRIPLE: x86_64-pc-windows-msvc
-      RUST_VERSION: 1.7.0
-    - RUST_INSTALL_TRIPLE: x86_64-pc-windows-msvc
-      RUST_VERSION: beta
-    - RUST_INSTALL_TRIPLE: x86_64-pc-windows-msvc
-      RUST_VERSION: nightly
+      RUST_VERSION: 1.8.0
 install:
    # Rust
-  - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-$Env:RUST_VERSION-$Env:RUST_INSTALL_TRIPLE.exe"
-  - cmd: rust-%RUST_VERSION%-%RUST_INSTALL_TRIPLE%.exe /VERYSILENT /NORESTART /COMPONENTS="rust,cargo" /DIR="%RUST_INSTALL_DIR%"
+  - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-$Env:RUST_VERSION-$Env:RUST_INSTALL_TRIPLE.msi"
+  - cmd: start /wait msiexec /i rust-%RUST_VERSION%-%RUST_INSTALL_TRIPLE%.msi INSTALLDIR="%RUST_INSTALL_DIR%" /quiet /qn /norestart
   - cmd: SET PATH=%PATH%;%RUST_INSTALL_DIR%\bin
   - rustc --version
   - cargo --version
@@ -21,8 +16,9 @@ install:
   - set QTDIR=C:\Qt\5.4\msvc2013_64_opengl
   - set PATH=%QTDIR%\bin;%PATH%
   - set CMAKE_PREFIX_PATH=%QTDIR%;%CMAKE_PREFIX_PATH%
-build: false
-test_script:
+build_script:
   - call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" x64
   - cargo build --verbose
+test_script:
+  - call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" x64
   - cargo test --verbose
