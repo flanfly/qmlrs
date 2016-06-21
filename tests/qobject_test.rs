@@ -35,8 +35,8 @@ pub fn qobject_test() {
 
     obj.set_property("name",Variant::String("Kai".to_string()));
     obj.emit(0,&[]);
-    obj.call(1,&[]);
-    obj.call(2,&[Variant::I64(42)]);
+    //obj.call(1,&[]);
+    //obj.call(2,&[Variant::I64(42)]);
 
     engine.set_property("person_one", &obj);
     engine.load_local_file("tests/qobject_test.qml");
