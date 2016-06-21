@@ -77,17 +77,11 @@ impl Engine {
         }
     }
 
-
-
-    pub fn load_local_file<P: AsRef<Path>>(&mut self, name: P) {
-        let path_raw = std::env::current_dir().unwrap().join(name);
-        let path
-            = if cfg!(windows) {
-                format!("file:///{}",path_raw.display())
-            } else {
-                format!("file://{}",path_raw.display())
-            } ;
-        self.load_url(&path);
+    pub fn load_local_file(&mut self, path: &str) {
+        unsafe {
+            ffi::qmlrs_engine_load_file(self.i.p, path.as_ptr() as *const c_char,
+                                       path.len() as c_uint);
+        }
     }
 
     pub fn exec(self) {

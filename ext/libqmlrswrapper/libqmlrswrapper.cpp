@@ -47,6 +47,10 @@ rust_fun void qmlrs_engine_load_url(QrsApplicationEngine *engine, const char *pa
     engine->load(QUrl(QString::fromUtf8(path, len)));
 }
 
+rust_fun void qmlrs_engine_load_file(QrsApplicationEngine *engine, const char *path, unsigned int len) {
+    engine->load(QUrl::fromLocalFile(QString::fromUtf8(path, len)));
+}
+
 rust_fun void qmlrs_engine_load_from_data(QrsApplicationEngine *engine, const char *data, unsigned int len) {
     engine->loadData(QByteArray::fromRawData(data, len), QUrl());
 }
