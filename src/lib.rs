@@ -3,8 +3,6 @@ extern crate libc;
 use libc::{c_char, c_uint, c_int};
 use std::sync::Arc;
 use ffi::{QrsEngine, QObject};
-use std::path::Path;
-use std::convert::AsRef;
 
 /* Re-exports */
 
@@ -233,7 +231,7 @@ pub fn register_singleton_type(module: &str, major: isize, minor: isize, typenam
 }
 
 pub fn clear_type_registrations() {
-    unsafe { ffi::clear_type_registrations() }
+    unsafe { ffi::qmlrs_clear_type_registrations() }
 }
 
 #[cfg(test)]
