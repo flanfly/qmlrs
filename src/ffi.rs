@@ -25,6 +25,7 @@ pub type SingletonFunction = extern "C" fn(qml: *mut QQmlEngine, js: *mut QJSEng
 extern "C" {
     pub fn qmlrs_register_singleton_type(uri: *const c_char, uri_len: c_uint, major: c_int, minor: c_int,
                                          typenam: *const c_char, typenam_len: c_uint, fun: SingletonFunction);
+    pub fn qmlrs_clear_type_registrations();
 
     pub fn qmlrs_create_engine() -> *mut QrsEngine;
     pub fn qmlrs_create_engine_headless() -> *mut QrsEngine;

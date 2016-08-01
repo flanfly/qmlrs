@@ -232,6 +232,10 @@ pub fn register_singleton_type(module: &str, major: isize, minor: isize, typenam
     }
 }
 
+pub fn clear_type_registrations() {
+    unsafe { ffi::clear_type_registrations() }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

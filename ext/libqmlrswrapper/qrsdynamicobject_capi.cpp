@@ -10,6 +10,10 @@ extern "C" void qmlrs_register_singleton_type(const char* uri, unsigned int uri_
 		qmlRegisterSingletonType<QObject>(module.toStdString().c_str(),major,minor,typenam.toStdString().c_str(),fun);
 }
 
+extern "C" void qmlrs_clear_type_registrations() {
+	qmlClearTypeRegistrations();
+}
+
 extern "C" QrsDynamicMetaObject *qmlrs_metaobject_create(const char* name, unsigned int name_len, QrsSlotFunction fun) {
     QString n = QString::fromUtf8(name, name_len);
     return new QrsDynamicMetaObject(n,fun);
