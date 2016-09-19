@@ -3,8 +3,6 @@ extern crate libc;
 use libc::{c_char, c_uint, c_int};
 use std::sync::Arc;
 use ffi::{QrsEngine, QObject};
-use std::path::Path;
-use std::convert::AsRef;
 
 /* Re-exports */
 
