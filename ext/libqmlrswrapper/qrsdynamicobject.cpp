@@ -168,14 +168,14 @@ void QrsDynamicObject::emitSignal(int id, QVariantList const& args)
 		qFatal("'%s' is not a signal",mm.name().constData());
 	}
 
-	std::vector<QVariant*> argv;
+	QVariant* argv[] = new QVariant[args.size() + 1];
 	int i = 0;
 
 	// return value (unused)
-	argv.push_back(nullptr);
+	argv[0] = nullptr;
 
 	while(i < args.size()) {
-		argv.push_back(new QVariant(args[i]));
+		argv[i] = new QVariant(args[i]);
 		++i;
 	}
 
@@ -186,6 +186,8 @@ void QrsDynamicObject::emitSignal(int id, QVariantList const& args)
 			delete v;
 		}
 	}
+
+	delete argv[];
 }
 
 QVariant QrsDynamicObject::callMethod(int id, QVariantList const& args) {

@@ -7,7 +7,7 @@ extern "C" void qmlrs_register_singleton_type(const char* uri, unsigned int uri_
     QString module = QString::fromUtf8(uri, uri_len);
     QString typenam = QString::fromUtf8(type, type_len);
 
-		qmlRegisterSingletonType<QObject>(module.toStdString().c_str(),major,minor,typenam.toStdString().c_str(),fun);
+    qmlRegisterSingletonType<QObject>(module.toLatin1().data(),major,minor,typenam.toLatin1().data(),fun);
 }
 
 extern "C" void qmlrs_clear_type_registrations() {
