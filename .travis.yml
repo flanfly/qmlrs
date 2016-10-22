@@ -33,5 +33,4 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -qq install libqt5qml-quickcontrols; fi
 script: |
   if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export QTDIR64=`brew --prefix qt5`; fi &&
-  cargo build --verbose &&
-  cargo test --verbose
+  cargo build --verbose
