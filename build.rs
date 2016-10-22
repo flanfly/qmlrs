@@ -63,6 +63,15 @@ fn main() {
     }
 
     let mut myargs = vec![];
+
+    if cfg!(build = "debug") {
+        myargs.push("-DCMAKE_BUILD_TYPE=Debug");
+    } else if cfg!(build = "release") {
+        myargs.push("-DCMAKE_BUILD_TYPE=Release");
+    } else {
+        panic!("Unsupported build type");
+    }
+
     if cfg!(windows) {
         let is_msys = env::var("MSYSTEM").is_ok();
 
@@ -101,7 +110,15 @@ fn main() {
 
     if cfg!(windows) {
         println!("cargo:rustc-link-search=native={}\\system32",env::var("WINDIR").unwrap());
-        println!("cargo:rustc-link-search=native={}\\Debug",build.display());
+
+        if cfg!(build = "debug") {
+            println!("cargo:rustc-link-search=native={}\\Debug",build.display());
+        } else if cfg!(build = "release") {
+            println!("cargo:rustc-link-search=native={}\\Release",build.display());
+        } else {
+            panic!("Unsupported build type");
+        }
+
         println!("cargo:rustc-link-search=native={}\\lib",env::var("QTDIR").unwrap());
 
         println!("cargo:rustc-link-lib=dylib=Qt5Core");
@@ -109,7 +126,7 @@ fn main() {
         println!("cargo:rustc-link-lib=dylib=Qt5Qml");
         println!("cargo:rustc-link-lib=dylib=Qt5Quick");
     } else {
-        println!("cargo:rustc-link-search=native={}{}",build.display(),if cfg!(windows) { "\\Debug" } else { "" });
+        println!("cargo:rustc-link-search=native={}",build.display());
         println!("cargo:rustc-link-lib=dylib=stdc++");
         pkg_config::find_library("Qt5Core Qt5Gui Qt5Qml Qt5Quick").unwrap();
     }
