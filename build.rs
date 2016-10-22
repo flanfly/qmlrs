@@ -6,11 +6,14 @@ use std::path::Path;
 use std::env;
 use std::env::consts;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 fn main() {
+	let debug = bool::from_str(&env::var("DEBUG").unwrap_or("false".to_string())).unwrap_or(false);
     let wcd = env::current_dir().unwrap();
     let build = PathBuf::from(&wcd.join("ext/libqmlrswrapper/build"));
-    let _ = fs::create_dir_all(&build);
+    let _ = fs::remove_dir_all(&build);
+	let _ = fs::create_dir_all(&build);
 
     /*
      * Support Qt installed via the Ports system on BSD-like systems.
@@ -63,6 +66,13 @@ fn main() {
     }
 
     let mut myargs = vec![];
+
+    if debug {
+        myargs.push("-DCMAKE_BUILD_TYPE=Debug");
+    } else {
+        myargs.push("-DCMAKE_BUILD_TYPE=Release");
+    }
+
     if cfg!(windows) {
         let is_msys = env::var("MSYSTEM").is_ok();
 
@@ -89,9 +99,17 @@ fn main() {
         check_qt_egl_reference_error(cmake_stderr.clone());
         panic!("cmake produced stderr: {}", cmake_stderr);
     }
-
+	
+	myargs = vec!["--build",".","--config"];
+	
+	if debug {
+		myargs.push("Debug");
+	} else {
+		myargs.push("Release");
+	}
+	
     Command::new("cmake")
-        .args(&vec!["--build","."])
+        .args(&myargs)
         .current_dir(&build)
         .status().and_then(|x| Ok(x.success()) ).unwrap_or_else(|e| {
             panic!("Failed to run build: {}", e);
@@ -101,7 +119,13 @@ fn main() {
 
     if cfg!(windows) {
         println!("cargo:rustc-link-search=native={}\\system32",env::var("WINDIR").unwrap());
-        println!("cargo:rustc-link-search=native={}\\Debug",build.display());
+
+        if debug {
+            println!("cargo:rustc-link-search=native={}\\Debug",build.display());
+        } else {
+            println!("cargo:rustc-link-search=native={}\\Release",build.display());
+        }
+
         println!("cargo:rustc-link-search=native={}\\lib",env::var("QTDIR").unwrap());
 
         println!("cargo:rustc-link-lib=dylib=Qt5Core");
@@ -109,7 +133,7 @@ fn main() {
         println!("cargo:rustc-link-lib=dylib=Qt5Qml");
         println!("cargo:rustc-link-lib=dylib=Qt5Quick");
     } else {
-        println!("cargo:rustc-link-search=native={}{}",build.display(),if cfg!(windows) { "\\Debug" } else { "" });
+        println!("cargo:rustc-link-search=native={}",build.display());
         println!("cargo:rustc-link-lib=dylib=stdc++");
         pkg_config::find_library("Qt5Core Qt5Gui Qt5Qml Qt5Quick").unwrap();
     }
