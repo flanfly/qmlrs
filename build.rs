@@ -132,10 +132,11 @@ fn main() {
         println!("cargo:rustc-link-lib=dylib=Qt5Gui");
         println!("cargo:rustc-link-lib=dylib=Qt5Qml");
         println!("cargo:rustc-link-lib=dylib=Qt5Quick");
+        println!("cargo:rustc-link-lib=dylib=Qt5Svg");
     } else {
         println!("cargo:rustc-link-search=native={}",build.display());
         println!("cargo:rustc-link-lib=dylib=stdc++");
-        pkg_config::find_library("Qt5Core Qt5Gui Qt5Qml Qt5Quick").unwrap();
+        pkg_config::find_library("Qt5Core Qt5Gui Qt5Qml Qt5Quick Qt5Svg").unwrap();
     }
 }
 
