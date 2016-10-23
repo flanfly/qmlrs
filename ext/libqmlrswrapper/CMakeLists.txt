@@ -18,10 +18,11 @@ endif()
 
 find_package(Qt5Core)
 find_package(Qt5Quick)
+find_package(Qt5Svg)
 
 set(qmlrswrapper_SRCS libqmlrswrapper.cpp qrsdynamicobject.cpp qrsdynamicobject_capi.cpp)
 
 add_library(qmlrswrapper STATIC ${qmlrswrapper_SRCS})
-target_link_libraries(qmlrswrapper Qt5::Core Qt5::Quick)
+target_link_libraries(qmlrswrapper Qt5::Core Qt5::Quick Qt5::Svg)
 
 install(TARGETS qmlrswrapper ARCHIVE DESTINATION lib)
