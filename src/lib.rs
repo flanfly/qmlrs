@@ -35,8 +35,8 @@ pub struct Engine {
 }
 
 impl Engine {
-    pub fn new() -> Engine {
-        let p = unsafe { ffi::qmlrs_create_engine() };
+    pub fn new(name: &str) -> Engine {
+        let p = unsafe { ffi::qmlrs_create_engine(name.as_ptr() as *const c_char, name.len() as c_uint) };
         assert!(!p.is_null());
 
         let i = Arc::new(EngineInternal {
@@ -48,8 +48,8 @@ impl Engine {
         }
     }
 
-    pub fn new_headless() -> Engine {
-        let p = unsafe { ffi::qmlrs_create_engine_headless() };
+    pub fn new_headless(name: &str) -> Engine {
+        let p = unsafe { ffi::qmlrs_create_engine_headless(name.as_ptr() as *const c_char, name.len() as c_uint) };
         assert!(!p.is_null());
 
         let i = Arc::new(EngineInternal {
@@ -240,6 +240,6 @@ mod test {
 
     #[test]
     fn test_create_engine() {
-        Engine::new_headless();
+        Engine::new_headless("test");
     }
 }

@@ -1,8 +1,8 @@
 [package]
 
 name = "qmlrs"
-version = "0.2.1"
-authors = ["Mikko Perttunen <cyndis@kapsi.fi>"]
+version = "0.3.0"
+authors = ["Mikko Perttunen <cyndis@kapsi.fi>","Kai Michaelis <seu@panopticon.re>"]
 license = "MIT/Apache-2.0"
 
 build = "build.rs"

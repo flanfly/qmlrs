@@ -6,7 +6,7 @@ use qmlrs::*;
 
 #[test]
 pub fn qobject_test() {
-    let mut engine = qmlrs::Engine::new();
+    let mut engine = qmlrs::Engine::new("test");
 
     extern "C" fn test_slot(_: *mut ffi::QObject, id: libc::c_int, _: *const ffi::QVariantList, ret: *mut ffi::QVariant) {
         println!("slot: {} called",id);

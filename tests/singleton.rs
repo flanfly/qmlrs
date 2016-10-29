@@ -6,7 +6,7 @@ use qmlrs::*;
 
 #[test]
 pub fn singleton_test() {
-    let mut engine = qmlrs::Engine::new();
+    let mut engine = qmlrs::Engine::new("name");
 
     extern "C" fn slot(p: *mut ffi::QObject, id: libc::c_int, _: *const ffi::QVariantList, _: *mut ffi::QVariant) {
         println!("id: {}",id);

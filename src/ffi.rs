@@ -27,8 +27,8 @@ extern "C" {
                                          typenam: *const c_char, typenam_len: c_uint, fun: SingletonFunction);
     pub fn qmlrs_clear_type_registrations();
 
-    pub fn qmlrs_create_engine() -> *mut QrsEngine;
-    pub fn qmlrs_create_engine_headless() -> *mut QrsEngine;
+    pub fn qmlrs_create_engine(name: *const c_char, len: c_uint) -> *mut QrsEngine;
+    pub fn qmlrs_create_engine_headless(name: *const c_char, len: c_uint) -> *mut QrsEngine;
     pub fn qmlrs_destroy_engine(engine: *mut QrsEngine);
     pub fn qmlrs_engine_load_url(engine: *mut QrsEngine, path: *const c_char, len: c_uint);
     pub fn qmlrs_engine_load_file(engine: *mut QrsEngine, path: *const c_char, len: c_uint);
