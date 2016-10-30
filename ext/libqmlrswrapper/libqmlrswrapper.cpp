@@ -9,8 +9,9 @@
 
 rust_fun QrsApplicationEngine *qmlrs_create_engine_headless(const char *name, unsigned int len) {
     if (!QCoreApplication::instance()) {
-        char *arg = (char *)strndup(name, len);
+        char *arg = (char *)malloc(len);
         char **argp = (char **)malloc(sizeof(char *));
+				memcpy(arg, name, len);
         *argp = arg;
 
         int *argc = (int *)malloc(sizeof(int));
@@ -24,8 +25,9 @@ rust_fun QrsApplicationEngine *qmlrs_create_engine_headless(const char *name, un
 
 rust_fun QrsApplicationEngine *qmlrs_create_engine(const char *name, unsigned int len) {
     if (!QGuiApplication::instance()) {
-        char *arg = (char *)strndup(name, len);
+        char *arg = (char *)malloc(len);
         char **argp = (char **)malloc(sizeof(char *));
+				memcpy(arg, name, len);
         *argp = arg;
 
         int *argc = (int *)malloc(sizeof(int));
