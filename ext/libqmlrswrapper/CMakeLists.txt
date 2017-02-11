@@ -22,6 +22,14 @@ find_package(Qt5Svg)
 
 set(qmlrswrapper_SRCS libqmlrswrapper.cpp qrsdynamicobject.cpp qrsdynamicobject_capi.cpp)
 
+# Workaround for Arch. Private headers aren't symlinked since 5.8
+# See Panopticon issue #235
+file(GLOB QT5_ALL_INCLUDES "/usr/include/qt/QtCore/5*/")
+if("${QT5_ALL_INCLUDES}" STREQUAL "")
+else()
+include_directories("${QT5_ALL_INCLUDES}")
+endif()
+
 add_library(qmlrswrapper STATIC ${qmlrswrapper_SRCS})
 target_link_libraries(qmlrswrapper Qt5::Core Qt5::Quick Qt5::Svg)
 
